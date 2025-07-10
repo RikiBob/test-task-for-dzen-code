@@ -2,6 +2,7 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import {
   BadRequestException,
+  HttpException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -56,7 +57,7 @@ export class AuthService {
 
       return tokenPair;
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new InternalServerErrorException('Failed to generate JWT');
     }
   }
 
@@ -86,20 +87,16 @@ export class AuthService {
   }
 
   async signIn(data: LoginUserDto, req: Request): Promise<TokenPair> {
-    try {
-      const existingUser = await this.checkUserExists(data.email);
-      await this.isPasswordValid(data.password, existingUser);
+    const existingUser = await this.checkUserExists(data.email);
+    await this.isPasswordValid(data.password, existingUser);
 
-      return this.generateJwt(
-        {
-          sub: existingUser.uuid,
-          login: existingUser.email,
-        },
-        req,
-      );
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
+    return this.generateJwt(
+      {
+        sub: existingUser.uuid,
+        login: existingUser.email,
+      },
+      req,
+    );
   }
 
   private async validateRefreshTokenFromCache(
@@ -141,7 +138,11 @@ export class AuthService {
 
       return { accessToken: newAccessToken };
     } catch (error) {
-      throw new UnauthorizedException('Invalid refresh token');
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Failed to refresh token');
     }
   }
 

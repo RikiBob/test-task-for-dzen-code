@@ -16,7 +16,7 @@ export class CommentEntity {
   @PrimaryGeneratedColumn('uuid')
   uuid: string;
 
-  @Column()
+  @Column({ nullable: true })
   homePage: string;
 
   @Column()
@@ -35,10 +35,10 @@ export class CommentEntity {
   childComments: CommentEntity[];
 
   @ManyToOne(() => UserEntity, (user) => user.comments)
-  @JoinColumn({ name: 'user_uuid' })
+  @JoinColumn({ name: 'userUuid' })
   user: UserEntity;
 
   @OneToOne(() => FileEntity, (file) => file.comment, { nullable: true })
-  @JoinColumn({ name: 'file_uuid' })
+  @JoinColumn({ name: 'fileUuid' })
   file: FileEntity | null;
 }

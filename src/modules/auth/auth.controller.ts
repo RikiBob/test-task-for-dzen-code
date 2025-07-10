@@ -48,7 +48,7 @@ export class AuthController {
 
   @Post('refresh')
   async refresh(@Req() req: Request, @Res() res: Response) {
-    const refreshToken = req.cookies?.['refresh-token'];
+    const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is missing');
@@ -56,7 +56,7 @@ export class AuthController {
 
     const newTokens = await this.authService.refreshToken(refreshToken, req);
 
-    res.cookie('access-token', newTokens.accessToken, {
+    res.cookie('accessToken', newTokens.accessToken, {
       httpOnly: true,
       maxAge: 60 * 30 * 1000,
       sameSite: true,
@@ -75,13 +75,13 @@ export class AuthController {
     const userUuid = req.user.uuid;
     await this.authService.logout(userUuid, req);
 
-    res.clearCookie('access-token', {
+    res.clearCookie('accessToken', {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
     });
 
-    res.clearCookie('refresh-token', {
+    res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
