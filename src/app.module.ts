@@ -4,8 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './orm/entities/user.entity';
 import { CommentEntity } from './orm/entities/comment.entity';
 import { FileEntity } from './orm/entities/file.entity';
-import { AuthModule } from "./modules/auth/auth.module";
-import { UserModule } from "./modules/user/user.module";
+import { AuthModule } from './modules/auth/auth.module';
+import { UserModule } from './modules/user/user.module';
+import { CommentModule } from './modules/comment/comment.module';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ dotenv.config();
     }),
     AuthModule,
     UserModule,
+    CommentModule,
   ],
   controllers: [],
   providers: [],

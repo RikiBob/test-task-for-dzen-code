@@ -13,7 +13,7 @@ export class FileEntity {
   uuid: string;
 
   @Column()
-  originName: string;
+  originalName: string;
 
   @Column()
   type: string;

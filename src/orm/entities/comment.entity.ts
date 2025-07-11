@@ -20,7 +20,7 @@ export class CommentEntity {
   homePage: string;
 
   @Column()
-  content: string;
+  text: string;
 
   @CreateDateColumn()
   createdAt: Date;
