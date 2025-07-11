@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../../orm/entities/user.entity';
-import { CreateUserDto } from './dto/creat-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UserService {
@@ -22,6 +22,22 @@ export class UserService {
 
   private async findByUserName(userName: string): Promise<UserEntity | null> {
     return await this.userRepository.findOneBy({ userName });
+  }
+
+  async checkUserExistsByEmail(email: string): Promise<void> {
+    const user = await this.findByEmail(email);
+
+    if (!user) {
+      throw new BadRequestException(`User with email ${email} no exists`);
+    }
+  }
+
+  async checkUserExistsByUserName(userName: string): Promise<void> {
+    const user = await this.findByUserName(userName);
+
+    if (!user) {
+      throw new BadRequestException(`User with username ${userName} no exists`);
+    }
   }
 
   private async checkUserNotExistsByEmail(email: string): Promise<void> {
