@@ -24,20 +24,32 @@ export class UserService {
     return await this.userRepository.findOneBy({ userName });
   }
 
-  async checkUserExistsByEmail(email: string): Promise<void> {
+  private async checkAndGetUserExistsByEmail(
+    email: string,
+  ): Promise<UserEntity> {
     const user = await this.findByEmail(email);
 
     if (!user) {
       throw new BadRequestException(`User with email ${email} no exists`);
     }
+
+    return user;
   }
 
-  async checkUserExistsByUserName(userName: string): Promise<void> {
-    const user = await this.findByUserName(userName);
+  async validateUserCredentials(
+    userName: string,
+    email: string,
+    userUuid: string,
+  ): Promise<UserEntity> {
+    const user = await this.checkAndGetUserExistsByEmail(email);
 
-    if (!user) {
-      throw new BadRequestException(`User with username ${userName} no exists`);
+    if (userName !== user.userName || userUuid !== user.uuid) {
+      throw new BadRequestException(
+        `Username ${userName} does not match the user registered with email ${email}`,
+      );
     }
+
+    return user;
   }
 
   private async checkUserNotExistsByEmail(email: string): Promise<void> {
