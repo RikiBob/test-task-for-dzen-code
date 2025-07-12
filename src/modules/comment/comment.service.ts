@@ -1,6 +1,10 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CommentEntity } from '../../orm/entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { SortCommentsDto } from './dto/sort-comments.dto';
@@ -26,38 +30,70 @@ export class CommentService {
   async getAllMain(
     data: SortCommentsDto,
   ): Promise<PaginatedResult<CommentEntity>> {
-    const { sortBy, sortOrder, page } = data;
-    const pageNumber = page || 1;
-    const take = 25;
-    const skip = (pageNumber - 1) * take;
-    const [allComments, total] = await this.commentRepository.findAndCount({
-      relations: ['parentComment'],
-      skip,
-      take,
-      order: { [sortBy || 'createdAt']: sortOrder || 'DESC' },
-    });
+    type sortKey = 'userName' | 'email' | 'createdAt';
 
-    return {
-      data: allComments,
-      total,
-      page: pageNumber,
-      totalPages: Math.ceil(total / take),
+    const sortFieldMap: Record<sortKey, string> = {
+      userName: 'user.userName',
+      email: 'user.email',
+      createdAt: 'comment.createdAt',
     };
+
+    try {
+      const { sortBy, sortOrder, page } = data;
+      const validSortField = sortFieldMap[sortBy] || 'comment.createdAt';
+      const pageNumber = page || 1;
+      const take = 25;
+      const skip = (pageNumber - 1) * take;
+      const [allComments, total] = await this.commentRepository
+        .createQueryBuilder('comment')
+        .leftJoinAndSelect('comment.childComments', 'child')
+        .leftJoinAndSelect('comment.file', 'file')
+        .leftJoin('comment.user', 'user')
+        .addSelect(['user.userName', 'user.email', 'user.picture'])
+        .where('comment.parentComment IS NULL')
+        .orderBy(validSortField, sortOrder || 'DESC')
+        .skip(skip)
+        .take(take)
+        .getManyAndCount();
+
+      return {
+        data: allComments,
+        total,
+        page: pageNumber,
+        totalPages: Math.ceil(total / take),
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to retrieve main comments',
+      );
+    }
   }
 
   async getByUuid(uuid: string): Promise<CommentEntity> {
-    return await this.commentRepository.findOne({
-      where: { uuid },
-      relations: ['childComments'],
-    });
+    try {
+      return await this.commentRepository.findOne({
+        where: { uuid },
+        relations: ['childComments'],
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to retrieve comment by uuid',
+      );
+    }
   }
 
-  async createComment(data: CreateCommentDto): Promise<CommentEntity> {
+  async createComment(
+    data: CreateCommentDto,
+    userUuid: string,
+  ): Promise<CommentEntity> {
     try {
       const { parentCommentUuid, userName, email, ...otherData } = data;
 
-      await this.userService.checkUserExistsByUserName(userName);
-      await this.userService.checkUserExistsByEmail(email);
+      const user = await this.userService.validateUserCredentials(
+        userName,
+        email,
+        userUuid,
+      );
 
       let parentComment = null;
 
@@ -68,6 +104,7 @@ export class CommentService {
       const comment = this.commentRepository.create({
         ...otherData,
         parentComment,
+        user,
       });
 
       await this.commentRepository.save(comment);
@@ -76,6 +113,10 @@ export class CommentService {
 
       return comment;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new InternalServerErrorException('Failed to create comment');
     }
   }

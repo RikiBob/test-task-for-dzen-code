@@ -6,10 +6,12 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Req,
   Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  UsePipes,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
@@ -20,6 +22,9 @@ import { JwtAuthGuard } from '../../guards/jwt.guard';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { SortCommentsDto } from './dto/sort-comments.dto';
 import { FileService } from '../file/file.service';
+import { AuthenticatedRequest } from '../../strategies/jwt.strategy';
+import { CommentTextValidationPipe } from '../../pipes/comment-text-validation.pipe';
+import { CommentFileValidationPipe } from '../../pipes/comment-file-validation.pipe';
 
 @Controller('comment')
 export class CommentController {
@@ -55,11 +60,14 @@ export class CommentController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
+  @UsePipes(CommentFileValidationPipe, CommentTextValidationPipe)
   async createComment(
     @Body() data: CreateCommentDto,
     @UploadedFile() fileForm: Express.Multer.File,
+    @Req() req: AuthenticatedRequest,
   ): Promise<CommentEntity | { file: FileEntity; comment: CommentEntity }> {
-    const comment = await this.commentService.createComment(data);
+    const userUuid = req.user.uuid;
+    const comment = await this.commentService.createComment(data, userUuid);
 
     if (fileForm) {
       const file = await this.fileService.upload({

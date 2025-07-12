@@ -58,7 +58,6 @@ export class FileService {
 
       return newFile;
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException('Failed to upload file');
     }
   }
@@ -76,7 +75,6 @@ export class FileService {
       if (error instanceof HttpException) {
         throw error;
       }
-
       throw new InternalServerErrorException('Failed to fetch file');
     }
   }

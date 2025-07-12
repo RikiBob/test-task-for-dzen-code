@@ -7,6 +7,7 @@ import { FileEntity } from './orm/entities/file.entity';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { CommentModule } from './modules/comment/comment.module';
+import { CaptchaModule } from './modules/captcha/captcha.module';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ dotenv.config();
     AuthModule,
     UserModule,
     CommentModule,
+    CaptchaModule,
   ],
   controllers: [],
   providers: [],
