@@ -31,14 +31,14 @@ export class AuthController {
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      maxAge: 60 * 30 * 1000,
+      maxAge: +process.env.COOKIE_MAX_AGE_IN_ACCESS,
       sameSite: true,
       secure: true,
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      maxAge: 2592000000,
+      maxAge: +process.env.COOKIE_MAX_AGE_IN_REFRESH,
       sameSite: true,
       secure: true,
     });
@@ -54,11 +54,15 @@ export class AuthController {
       throw new UnauthorizedException('Refresh token is missing');
     }
 
-    const newTokens = await this.authService.refreshToken(refreshToken, req);
+    const newTokens =
+      await this.authService.generateAccessTokenFromRefreshToken(
+        refreshToken,
+        req,
+      );
 
     res.cookie('accessToken', newTokens.accessToken, {
       httpOnly: true,
-      maxAge: 60 * 30 * 1000,
+      maxAge: +process.env.COOKIE_MAX_AGE_IN_ACCESS,
       sameSite: true,
       secure: true,
     });

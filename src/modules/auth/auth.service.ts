@@ -13,7 +13,10 @@ import { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Request } from 'express';
 import { UserEntity } from '../../orm/entities/user.entity';
-import { JwtPayload } from '../../strategies/jwt.strategy';
+import {
+  AuthenticatedRequest,
+  JwtPayload,
+} from '../../strategies/jwt.strategy';
 import { LoginUserDto } from './dto/login-user.dto';
 
 type TokenPair = {
@@ -52,7 +55,7 @@ export class AuthService {
       await this.cacheManager.set(
         `refresh-token-${payload.sub}-${userAgent}`,
         tokenPair.refreshToken,
-        2592000000,
+        +process.env.REDIS_TTL_IN_REFRESH,
       );
 
       return tokenPair;
@@ -113,7 +116,7 @@ export class AuthService {
     }
   }
 
-  async refreshToken(
+  async generateAccessTokenFromRefreshToken(
     refreshToken: string,
     req: Request,
   ): Promise<{ accessToken: string }> {
@@ -146,7 +149,7 @@ export class AuthService {
     }
   }
 
-  async logout(uuid: string, req: Request): Promise<void> {
+  async logout(uuid: string, req: AuthenticatedRequest): Promise<void> {
     try {
       const userAgent = req.headers['user-agent'] ?? 'unknown-agent';
       await this.cacheManager.del(`refresh-token-${uuid}-${userAgent}`);
