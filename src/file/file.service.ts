@@ -7,8 +7,8 @@ import {
 import { v4 as uuid } from 'uuid';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { FileEntity } from '../../orm/entities/file.entity';
-import { CommentEntity } from '../../orm/entities/comment.entity';
+import { FileEntity } from '../orm/entities/file.entity';
+import { CommentEntity } from '../orm/entities/comment.entity';
 
 import { S3 } from 'aws-sdk';
 
@@ -17,7 +17,7 @@ export type UploadFileParams = {
   fileType: string;
   fileSize: number;
   file: Buffer;
-  comment: CommentEntity;
+  comment?: CommentEntity;
 };
 
 @Injectable()

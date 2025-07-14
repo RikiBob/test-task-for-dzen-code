@@ -1,6 +1,6 @@
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { CommentEntity } from '../../orm/entities/comment.entity';
+import { CommentEntity } from '../orm/entities/comment.entity';
 
 @WebSocketGateway({
   cors: {
