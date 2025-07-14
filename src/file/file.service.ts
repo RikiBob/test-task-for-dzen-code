@@ -18,6 +18,7 @@ export type UploadFileParams = {
   fileSize: number;
   file: Buffer;
   comment?: CommentEntity;
+  pictureUrl?: string;
 };
 
 @Injectable()
@@ -33,10 +34,32 @@ export class FileService {
     private readonly fileRepository: Repository<FileEntity>,
   ) {}
 
+  async checkAndDeleteExistsByUrl(url: string): Promise<void> {
+    try {
+      const file = await this.fileRepository.findOneBy({ url });
+
+      if (file) {
+        const { uuid, key } = file;
+        await this.fileRepository.delete({ uuid });
+
+        await this.s3
+          .deleteObject({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: key,
+          })
+          .promise();
+      }
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to delete file');
+    }
+  }
+
   async upload(data: UploadFileParams): Promise<FileEntity> {
-    const { fileName, file, fileType, fileSize, comment } = data;
+    const { fileName, file, fileType, fileSize, comment, pictureUrl } = data;
 
     try {
+      await this.checkAndDeleteExistsByUrl(pictureUrl);
+
       const uploadResult: S3.ManagedUpload.SendData = await this.s3
         .upload({
           Bucket: process.env.AWS_BUCKET_NAME,
@@ -58,6 +81,10 @@ export class FileService {
 
       return newFile;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new InternalServerErrorException('Failed to upload file');
     }
   }
