@@ -1,6 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
+  BadRequestException,
   HttpException,
   Injectable,
   InternalServerErrorException,
@@ -9,9 +10,9 @@ import { CommentEntity } from '../../orm/entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { SortCommentsDto } from './dto/sort-comments.dto';
 import { WSGateway } from '../../ws/ws.gateway';
-import { UserService } from '../user/user.service';
 import { join } from 'path';
 import { promises as fs } from 'fs';
+import { UserEntity } from '../../orm/entities/user.entity';
 
 export type PaginatedResult<T> = {
   data: T[];
@@ -31,7 +32,8 @@ export class CommentService {
   constructor(
     @InjectRepository(CommentEntity)
     private readonly commentRepository: Repository<CommentEntity>,
-    private readonly userService: UserService,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
     private readonly webSocketGateway: WSGateway,
   ) {}
 
@@ -105,7 +107,6 @@ export class CommentService {
         totalPages: Math.ceil(count / take),
       };
     } catch (error) {
-      console.error(error);
       throw new InternalServerErrorException(
         'Failed to retrieve main comments',
       );
@@ -125,6 +126,34 @@ export class CommentService {
     }
   }
 
+  private async checkAndGetUserExistsByEmail(
+    email: string,
+  ): Promise<UserEntity> {
+    const user = await this.userRepository.findOneBy({ email });
+
+    if (!user) {
+      throw new BadRequestException(`User with email ${email} no exists`);
+    }
+
+    return user;
+  }
+
+  private async validateUserCredentials(
+    userName: string,
+    email: string,
+    userUuid: string,
+  ): Promise<UserEntity> {
+    const user = await this.checkAndGetUserExistsByEmail(email);
+
+    if (userName !== user.userName || userUuid !== user.uuid) {
+      throw new BadRequestException(
+        `Username ${userName} does not match the user registered with email ${email}`,
+      );
+    }
+
+    return user;
+  }
+
   async createComment(
     data: CreateCommentDto,
     userUuid: string,
@@ -132,7 +161,7 @@ export class CommentService {
     try {
       const { parentCommentUuid, userName, email, ...otherData } = data;
 
-      const user = await this.userService.validateUserCredentials(
+      const user = await this.validateUserCredentials(
         userName,
         email,
         userUuid,

@@ -5,14 +5,12 @@ import { CommentController } from './comment.controller';
 import { CommentEntity } from '../../orm/entities/comment.entity';
 import { FileEntity } from '../../orm/entities/file.entity';
 import { UserEntity } from '../../orm/entities/user.entity';
-import { UserModule } from '../user/user.module';
 import { FileService } from "../../file/file.service";
 import { WSGateway } from "../../ws/ws.gateway";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([CommentEntity, FileEntity, UserEntity]),
-    UserModule,
   ],
   controllers: [CommentController],
   providers: [CommentService, FileService, WSGateway],
