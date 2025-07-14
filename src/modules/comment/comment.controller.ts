@@ -21,7 +21,7 @@ import { FileEntity } from '../../orm/entities/file.entity';
 import { JwtAuthGuard } from '../../guards/jwt.guard';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { SortCommentsDto } from './dto/sort-comments.dto';
-import { FileService } from '../file/file.service';
+import { FileService } from '../../file/file.service';
 import { AuthenticatedRequest } from '../../strategies/jwt.strategy';
 import { CommentTextValidationPipe } from '../../pipes/comment-text-validation.pipe';
 import { CommentFileValidationPipe } from '../../pipes/comment-file-validation.pipe';
@@ -42,7 +42,7 @@ export class CommentController {
 
   @Get(':uuid')
   @UseGuards(JwtAuthGuard)
-  getById(@Param('uuid', ParseUUIDPipe) uuid: string): Promise<CommentEntity> {
+  getById(@Param('uuid', ParseUUIDPipe) uuid: string): Promise<CommentEntity[]> {
     return this.commentService.getByUuid(uuid);
   }
 

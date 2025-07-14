@@ -8,15 +8,23 @@ import {
 import { CommentEntity } from '../../orm/entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { SortCommentsDto } from './dto/sort-comments.dto';
-import { WSGateway } from '../ws/ws.gateway';
+import { WSGateway } from '../../ws/ws.gateway';
 import { UserService } from '../user/user.service';
+import { join } from 'path';
+import { promises as fs } from 'fs';
 
 export type PaginatedResult<T> = {
   data: T[];
-  total: number;
+  count: number;
   page: number;
   totalPages: number;
 };
+
+type RenameParentComment<T> = {
+  [K in keyof T as K extends 'parentComment' ? 'parent_comment' : K]: T[K];
+};
+
+type RawComment = RenameParentComment<CommentEntity>;
 
 @Injectable()
 export class CommentService {
@@ -27,54 +35,89 @@ export class CommentService {
     private readonly webSocketGateway: WSGateway,
   ) {}
 
+  private buildCommentTree(flatComments: RawComment[]): CommentEntity[] {
+    const map = new Map();
+    const roots = [];
+
+    flatComments.forEach((comment) => {
+      comment.childComments = [];
+      map.set(comment.uuid, comment);
+    });
+
+    flatComments.forEach((comment) => {
+      if (comment.parent_comment) {
+        const parent = map.get(comment.parent_comment);
+        if (parent) {
+          parent.childComments.push(comment);
+        } else {
+          roots.push(comment);
+        }
+      } else {
+        roots.push(comment);
+      }
+    });
+
+    return roots;
+  }
+
+  private async readSql(fileName: string): Promise<string> {
+    const basePath = join(__dirname, '..', '..', 'orm', 'sql');
+
+    const fullPath = join(basePath, fileName);
+    return fs.readFile(fullPath, 'utf-8');
+  }
+
   async getAllMain(
     data: SortCommentsDto,
   ): Promise<PaginatedResult<CommentEntity>> {
     type sortKey = 'userName' | 'email' | 'createdAt';
 
     const sortFieldMap: Record<sortKey, string> = {
-      userName: 'user.userName',
-      email: 'user.email',
-      createdAt: 'comment.createdAt',
+      userName: 'user_name',
+      email: 'email',
+      createdAt: 'created_at',
     };
 
     try {
       const { sortBy, sortOrder, page } = data;
-      const validSortField = sortFieldMap[sortBy] || 'comment.createdAt';
+      const validSortField = sortFieldMap[sortBy] || 'created_at';
+      const validSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
       const pageNumber = page || 1;
       const take = 25;
       const skip = (pageNumber - 1) * take;
-      const [allComments, total] = await this.commentRepository
-        .createQueryBuilder('comment')
-        .leftJoinAndSelect('comment.childComments', 'child')
-        .leftJoinAndSelect('comment.file', 'file')
-        .leftJoin('comment.user', 'user')
-        .addSelect(['user.userName', 'user.email', 'user.picture'])
-        .where('comment.parentComment IS NULL')
-        .orderBy(validSortField, sortOrder || 'DESC')
-        .skip(skip)
-        .take(take)
-        .getManyAndCount();
+      let sql = await this.readSql('getMainComments.sql');
+
+      sql = sql
+        .replace('__SORT_FIELD__', validSortField)
+        .replace('__SORT_ORDER__', validSortOrder);
+
+      const allComments = await this.commentRepository.query(sql, [take, skip]);
+      const [{ count }] = await this.commentRepository.query(
+        'SELECT COUNT(*) FROM comment WHERE parent_comment IS NULL',
+      );
+
+      const treeComments = this.buildCommentTree(allComments);
 
       return {
-        data: allComments,
-        total,
+        data: treeComments,
+        count,
         page: pageNumber,
-        totalPages: Math.ceil(total / take),
+        totalPages: Math.ceil(count / take),
       };
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
         'Failed to retrieve main comments',
       );
     }
   }
 
-  async getByUuid(uuid: string): Promise<CommentEntity> {
+  async getByUuid(uuid: string): Promise<CommentEntity[]> {
     try {
-      return await this.commentRepository.findOne({
-        where: { uuid },
-        relations: ['childComments'],
-      });
+      const sql = await this.readSql('getCommentByUuid.sql');
+      const comment = await this.commentRepository.query(sql, [uuid]);
+
+      return this.buildCommentTree(comment);
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to retrieve comment by uuid',
