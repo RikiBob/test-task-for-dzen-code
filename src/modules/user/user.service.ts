@@ -70,7 +70,7 @@ export class UserService {
     }
   }
 
-  async createUser(data: CreateUserDto): Promise<UserEntity> {
+  async createUser(data: CreateUserDto, url?: string): Promise<UserEntity> {
     try {
       const { email, userName } = data;
 
@@ -79,6 +79,7 @@ export class UserService {
 
       const user = this.userRepository.create({
         ...data,
+        picture: url,
       });
 
       await this.userRepository.save(user);

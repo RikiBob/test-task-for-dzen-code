@@ -1,85 +1,109 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Test-task: comments
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+**Server-side NestJS application** for managing comments with file attachments and nested replies.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+This API provides functionality for comment handling and includes:
+- Creating new comments
+- Adding sub-comments (nested replies)
+- Attaching files to comments
+- Storing attachments in AWS S3
+- Validating CAPTCHA for comment submissions 
+- Retrieving paginated comments and their nested structure
+- Authenticate users using JWT tokens
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Requirements
 
-## Project setup
+You should have:
+- AWS S3 Bucket:
 
-```bash
-$ npm install
-```
+## 🚀 Installation
 
-## Compile and run the project
+- Make sure you have the following programs installed:
+  
+  1.Docker
+  2.Docker Compose
+
+### Clone the repository
 
 ```bash
-# development
-$ npm run start
+git clone https://github.com/RikiBob/test-task-for-dzen-code.git
+```
+## Customizing Docker Compose
 
-# watch mode
-$ npm run start:dev
+# If you need to customize the Docker Compose configuration, you can create a .env file in the project's root and adjust the variables according to your requirements.
 
-# production mode
-$ npm run start:prod
+Here is an example .env file:
+
+## Example `.env` file
+
+```env
+# App
+PORT=4000
+FRONTEND_URL=localhost:3000
+
+# Database (PostgreSQL)
+DB_PORT_LOCAL=55432       # Host port (for developer access)
+DB_PORT=5432              # Container internal port
+DB_USERNAME=your-db-username
+DB_HOST=your-db-host
+DB_PASSWORD=your-db-password
+DB_NAME=your-db-name
+DB_ENTITIES=dist/**/*.entity.js
+DB_MIGRATIONS=dist/migrations/*.js
+
+# Redis
+REDIS_PORT_LOCAL=16379    # Host port
+REDIS_PORT=6379           # Container internal port
+REDIS_HOST=your-redis-host
+REDIS_USERNAME=your-redis-username
+REDIS_PASSWORD=your-redis-password
+
+# JWT
+JWT_SECRET=your-jwt-secret
+JWT_EXPIRES_IN_ACCESS=30m
+JWT_EXPIRES_IN_REFRESH=720h
+
+# AWS S3 (replace with actual values)
+AWS_S3_REGION=your-region
+AWS_ACCESS_KEY_ID=your-access-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-access-key
+AWS_BUCKET_NAME=your-bucket-name
+
+# Session
+SESSION_SECRET_KEY=your-session-secret
+
+SWAGGER_LOGIN=admin
+SWAGGER_PASSWORD=admin
+
+NODE_ENV=development
 ```
 
-## Run tests
+## After setting up the .env file, run the following command in the project directory bash to start the project:
 
 ```bash
-# unit tests
-$ npm run test
+docker-compose up --build -d
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker-compose run --rm app npm run migration:run
 ```
 
-## Resources
+## For stop running project in docker
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+docker-compose stop
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Swagger Integration
 
-## Support
+# Access Swagger UI
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Visit Swagger UI:
+Open your web browser and navigate to the Swagger UI endpoint. Endpoint is /api.
 
-## Stay in touch
+# Authentication
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Authentication may be required for Swagger. If so, use the following credentials:
 
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Username: Value from the .env file (e.g., SWAGGER_LOGIN)
+- Password: Value from the .env file (e.g., SWAGGER_PASSWORD)

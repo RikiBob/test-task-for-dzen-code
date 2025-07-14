@@ -21,8 +21,4 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
   password: string;
-
-  @IsOptional()
-  @IsUrl()
-  picture?: string;
 }
