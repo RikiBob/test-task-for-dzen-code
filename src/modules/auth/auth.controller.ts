@@ -9,16 +9,43 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiCookieAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+
 import { AuthService } from './auth.service';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthenticatedRequest } from '../../strategies/jwt.strategy';
 import { JwtAuthGuard } from '../../guards/jwt.guard';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @ApiOperation({
+    summary: 'Sing in',
+    description: 'Starting a session and setting access and refresh tokens',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User successfully logged in',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Validation failed',
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to generate JWT',
+  })
+  @ApiBody({ type: LoginUserDto })
   async login(
     @Body() data: LoginUserDto,
     @Req() req: Request,
@@ -47,7 +74,21 @@ export class AuthController {
   }
 
   @Post('refresh')
-  async refresh(@Req() req: Request, @Res() res: Response) {
+  @ApiOperation({
+    summary: 'Access token renewal',
+    description: 'Updates access token via refresh token passed in cookies',
+  })
+  @ApiCookieAuth()
+  @ApiResponse({ status: HttpStatus.OK, description: 'Access token renewal' })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Refresh token missing or invalid',
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to refresh token',
+  })
+  async refresh(@Req() req: Request, @Res() res: Response): Promise<Response> {
     const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
@@ -70,8 +111,26 @@ export class AuthController {
     return res.sendStatus(HttpStatus.OK);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Sign out',
+    description:
+      'Clears access token and refresh token from cookies and ends the session',
+  })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully logged out',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'No access or user is not authorized',
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Logout failed',
+  })
   async logout(
     @Res() res: Response,
     @Req() req: AuthenticatedRequest,

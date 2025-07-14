@@ -1,20 +1,24 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as Canvas from 'canvas';
 
 @Injectable()
 export class CaptchaService {
   generateCaptcha(): { image: Buffer; text: string } {
-    const canvas = Canvas.createCanvas(150, 50);
-    const ctx = canvas.getContext('2d');
+    try {
+      const canvas = Canvas.createCanvas(150, 50);
+      const ctx = canvas.getContext('2d');
 
-    const text = this.generateRandomString();
+      const text = this.generateRandomString();
 
-    ctx.font = '30px Arial';
-    ctx.fillText(text, 10, 40);
+      ctx.font = '30px Arial';
+      ctx.fillText(text, 10, 40);
 
-    const buffer = canvas.toBuffer();
+      const buffer = canvas.toBuffer();
 
-    return { image: buffer, text };
+      return { image: buffer, text };
+    } catch (error) {
+      throw new InternalServerErrorException('Filed to get captcha file');
+    }
   }
 
   private generateRandomString(): string {

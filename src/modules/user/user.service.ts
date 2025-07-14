@@ -109,7 +109,11 @@ export class UserService {
   }
 
   async getUserByUuid(uuid: string): Promise<UserEntity> {
-    return await this.findByUuid(uuid);
+    try {
+      return await this.findByUuid(uuid);
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to get user by uuid');
+    }
   }
 
   async deleteUser(uuid: string, req: AuthenticatedRequest): Promise<void> {

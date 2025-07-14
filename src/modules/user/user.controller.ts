@@ -16,10 +16,20 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from '../auth/auth.service';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { FileService } from '../../file/file.service';
 import { UserPictureValidationPipe } from '../../pipes/user-picture-validation.pipe';
 import { JwtAuthGuard } from '../../guards/jwt.guard';
@@ -27,6 +37,7 @@ import { AuthenticatedRequest } from '../../strategies/jwt.strategy';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from '../../orm/entities/user.entity';
 
+@ApiTags('User')
 @Controller('user')
 export class UserController {
   constructor(
@@ -38,6 +49,21 @@ export class UserController {
   @Post()
   @UseInterceptors(FileInterceptor('picture'))
   @UsePipes(UserPictureValidationPipe)
+  @ApiOperation({ summary: 'Create a new user with optional profile picture' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CreateUserDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User created successfully and tokens returned as cookies',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'User name or email already exists',
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to create user',
+  })
   async createUser(
     @Body() data: CreateUserDto,
     @UploadedFile() fileForm: Express.Multer.File,
@@ -91,6 +117,22 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('picture'))
   @UsePipes(UserPictureValidationPipe)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update current user data and/or profile picture' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User updated successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'User with user name already exists',
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to update user',
+  })
   async updateUser(
     @Body() data: UpdateUserDto,
     @UploadedFile() fileForm: Express.Multer.File,
@@ -124,6 +166,23 @@ export class UserController {
 
   @Get(':uuid')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user by UUID' })
+  @ApiParam({
+    name: 'uuid',
+    type: String,
+    description: 'UUID of the user',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Returns user data',
+    type: UserEntity,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to get user by uuid',
+  })
   async getUserByUuid(
     @Param('uuid', ParseUUIDPipe) uuid: string,
   ): Promise<UserEntity> {
@@ -132,6 +191,16 @@ export class UserController {
 
   @Delete()
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete current user and clear auth cookies' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User deleted and cookies cleared',
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to delete user',
+  })
   async deleteUser(
     @Req() req: AuthenticatedRequest,
     @Res() res: Response,
