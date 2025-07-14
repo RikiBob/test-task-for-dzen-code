@@ -16,29 +16,31 @@ export class CommentEntity {
   @PrimaryGeneratedColumn('uuid')
   uuid: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, name: 'home_page' })
   homePage: string;
 
   @Column()
   text: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @ManyToOne(() => CommentEntity, (comment) => comment.childComments, {
     nullable: true,
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'parent_comment' })
   parentComment: CommentEntity | null;
 
   @OneToMany(() => CommentEntity, (comment) => comment.parentComment)
+  @JoinColumn({ name: 'children_comment' })
   childComments: CommentEntity[];
 
   @ManyToOne(() => UserEntity, (user) => user.comments)
-  @JoinColumn({ name: 'userUuid' })
+  @JoinColumn({ name: 'user_uuid' })
   user: UserEntity;
 
   @OneToOne(() => FileEntity, (file) => file.comment, { nullable: true })
-  @JoinColumn({ name: 'fileUuid' })
+  @JoinColumn({ name: 'file_uuid' })
   file: FileEntity | null;
 }

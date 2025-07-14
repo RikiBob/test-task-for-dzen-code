@@ -15,7 +15,7 @@ export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
   uuid: string;
 
-  @Column()
+  @Column({ name: 'user_name' })
   userName: string;
 
   @Column()
@@ -27,10 +27,10 @@ export class UserEntity {
   @Column({ nullable: true })
   picture: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'update_at' })
   updatedAt: Date;
 
   @OneToMany(() => CommentEntity, (comment) => comment.user)

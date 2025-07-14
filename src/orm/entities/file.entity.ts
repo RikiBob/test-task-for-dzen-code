@@ -12,7 +12,7 @@ export class FileEntity {
   @PrimaryGeneratedColumn('uuid')
   uuid: string;
 
-  @Column()
+  @Column({ name: 'original_name' })
   originalName: string;
 
   @Column()
@@ -27,7 +27,7 @@ export class FileEntity {
   @Column()
   url: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @OneToOne(() => CommentEntity, (comment) => comment.file)
