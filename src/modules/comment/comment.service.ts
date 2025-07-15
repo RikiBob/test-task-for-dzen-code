@@ -6,12 +6,13 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { join } from 'path';
+import { promises as fs } from 'fs';
+
 import { CommentEntity } from '../../orm/entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { SortCommentsDto } from './dto/sort-comments.dto';
 import { WSGateway } from '../../ws/ws.gateway';
-import { join } from 'path';
-import { promises as fs } from 'fs';
 import { UserEntity } from '../../orm/entities/user.entity';
 
 export type PaginatedResult<T> = {

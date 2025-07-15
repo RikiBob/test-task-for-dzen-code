@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
+
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserEntity } from '../../orm/entities/user.entity';

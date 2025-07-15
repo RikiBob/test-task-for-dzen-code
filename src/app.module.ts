@@ -1,9 +1,7 @@
 import * as dotenv from 'dotenv';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from './orm/entities/user.entity';
-import { CommentEntity } from './orm/entities/comment.entity';
-import { FileEntity } from './orm/entities/file.entity';
+
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { CommentModule } from './modules/comment/comment.module';
@@ -20,8 +18,8 @@ dotenv.config();
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: ['dist/**/*.entity.js'],
-      migrations: ['dist/orm/migrations/*.js'],
+      entities: [process.env.DB_ENTITIES],
+      migrations: [process.env.DB_MIGRATIONS],
       synchronize: false,
     }),
     AuthModule,

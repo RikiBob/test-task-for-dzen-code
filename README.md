@@ -23,6 +23,7 @@ You should have:
 - Make sure you have the following programs installed:
   
   1.Docker
+
   2.Docker Compose
 
 ### Clone the repository
@@ -32,11 +33,11 @@ git clone https://github.com/RikiBob/test-task-for-dzen-code.git
 ```
 ## Customizing Docker Compose
 
-# If you need to customize the Docker Compose configuration, you can create a .env file in the project's root and adjust the variables according to your requirements.
+### If you need to customize the Docker Compose configuration, you can create a .env file in the project's root and adjust the variables according to your requirements.
 
 Here is an example .env file:
 
-## Example `.env` file
+### Example `.env` file
 
 ```env
 # App
@@ -59,6 +60,7 @@ REDIS_PORT=6379           # Container internal port
 REDIS_HOST=your-redis-host
 REDIS_USERNAME=your-redis-username
 REDIS_PASSWORD=your-redis-password
+REDIS_TTL_IN_REFRESH=2592000000
 
 # JWT
 JWT_SECRET=your-jwt-secret
@@ -70,6 +72,10 @@ AWS_S3_REGION=your-region
 AWS_ACCESS_KEY_ID=your-access-key-id
 AWS_SECRET_ACCESS_KEY=your-secret-access-key
 AWS_BUCKET_NAME=your-bucket-name
+
+#Cookies
+COOKIE_MAX_AGE_IN_ACCESS=1800000
+COOKIE_MAX_AGE_IN_REFRESH=2592000000
 
 # Session
 SESSION_SECRET_KEY=your-session-secret
@@ -96,12 +102,13 @@ docker-compose stop
 
 ## Swagger Integration
 
-# Access Swagger UI
+### Access Swagger UI
 
 Visit Swagger UI:
+
 Open your web browser and navigate to the Swagger UI endpoint. Endpoint is /api.
 
-# Authentication
+### Authentication
 
 Authentication may be required for Swagger. If so, use the following credentials:
 

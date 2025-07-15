@@ -1,3 +1,4 @@
+import { S3 } from 'aws-sdk';
 import {
   HttpException,
   Injectable,
@@ -7,10 +8,10 @@ import {
 import { v4 as uuid } from 'uuid';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { FileEntity } from '../orm/entities/file.entity';
 import { CommentEntity } from '../orm/entities/comment.entity';
 
-import { S3 } from 'aws-sdk';
 
 export type UploadFileParams = {
   fileName: string;
