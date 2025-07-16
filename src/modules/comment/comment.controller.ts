@@ -79,9 +79,7 @@ export class CommentController {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     description: 'Failed to retrieve comment by uuid',
   })
-  getById(
-    @Param('uuid', ParseUUIDPipe) uuid: string,
-  ): Promise<CommentEntity[]> {
+  getById(@Param('uuid', ParseUUIDPipe) uuid: string): Promise<CommentEntity> {
     return this.commentService.getByUuid(uuid);
   }
 

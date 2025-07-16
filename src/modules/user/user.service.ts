@@ -5,6 +5,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+
 import { Repository } from 'typeorm';
 import { UserEntity } from '../../orm/entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -57,14 +58,18 @@ export class UserService {
     uuid: string,
   ): Promise<UserEntity> {
     const user = await this.findByUserName(userName);
+    const currentUser = await this.findByUuid(uuid);
 
-    if (user?.userName === userName && user?.uuid !== uuid) {
+    if (
+      user?.userName === currentUser.userName &&
+      user?.uuid !== currentUser.uuid
+    ) {
       throw new BadRequestException(
         `User with user name ${userName} already exists`,
       );
     }
 
-    return user;
+    return currentUser;
   }
 
   async createUser(data: CreateUserDto, picture?: string): Promise<UserEntity> {

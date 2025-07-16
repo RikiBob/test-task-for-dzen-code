@@ -12,7 +12,6 @@ import { Repository } from 'typeorm';
 import { FileEntity } from '../orm/entities/file.entity';
 import { CommentEntity } from '../orm/entities/comment.entity';
 
-
 export type UploadFileParams = {
   fileName: string;
   fileType: string;
@@ -37,18 +36,20 @@ export class FileService {
 
   async checkAndDeleteExistsByUrl(url: string): Promise<void> {
     try {
-      const file = await this.fileRepository.findOneBy({ url });
+      if (url) {
+        const file = await this.fileRepository.findOneBy({ url });
 
-      if (file) {
-        const { uuid, key } = file;
-        await this.fileRepository.delete({ uuid });
+        if (file) {
+          const { uuid, key } = file;
+          await this.fileRepository.delete({ uuid });
 
-        await this.s3
-          .deleteObject({
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Key: key,
-          })
-          .promise();
+          await this.s3
+            .deleteObject({
+              Bucket: process.env.AWS_BUCKET_NAME,
+              Key: key,
+            })
+            .promise();
+        }
       }
     } catch (error) {
       throw new InternalServerErrorException('Failed to delete file');
@@ -59,7 +60,9 @@ export class FileService {
     const { fileName, file, fileType, fileSize, comment, pictureUrl } = data;
 
     try {
-      await this.checkAndDeleteExistsByUrl(pictureUrl);
+      if (pictureUrl) {
+        await this.checkAndDeleteExistsByUrl(pictureUrl);
+      }
 
       const uploadResult: S3.ManagedUpload.SendData = await this.s3
         .upload({

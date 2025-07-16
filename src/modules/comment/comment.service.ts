@@ -114,12 +114,12 @@ export class CommentService {
     }
   }
 
-  async getByUuid(uuid: string): Promise<CommentEntity[]> {
+  async getByUuid(uuid: string): Promise<CommentEntity> {
     try {
       const sql = await this.readSql('getCommentByUuid.sql');
       const comment = await this.commentRepository.query(sql, [uuid]);
 
-      return this.buildCommentTree(comment);
+      return this.buildCommentTree(comment)[0];
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to retrieve comment by uuid',

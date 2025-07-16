@@ -11,12 +11,12 @@ import {
 import { Request, Response } from 'express';
 import {
   ApiBearerAuth,
-  ApiBody,
+  ApiBody, ApiConsumes,
   ApiCookieAuth,
   ApiOperation,
   ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+  ApiTags
+} from "@nestjs/swagger";
 
 import { AuthService } from './auth.service';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -33,6 +33,7 @@ export class AuthController {
     summary: 'Sing in',
     description: 'Starting a session and setting access and refresh tokens',
   })
+  @ApiBody({ type: LoginUserDto })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User successfully logged in',
@@ -45,7 +46,6 @@ export class AuthController {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     description: 'Failed to generate JWT',
   })
-  @ApiBody({ type: LoginUserDto })
   async login(
     @Body() data: LoginUserDto,
     @Req() req: Request,
@@ -60,14 +60,14 @@ export class AuthController {
       httpOnly: true,
       maxAge: +process.env.COOKIE_MAX_AGE_IN_ACCESS,
       sameSite: true,
-      secure: true,
+      secure: false,
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       maxAge: +process.env.COOKIE_MAX_AGE_IN_REFRESH,
       sameSite: true,
-      secure: true,
+      secure: false,
     });
 
     return res.sendStatus(HttpStatus.OK);
@@ -105,7 +105,7 @@ export class AuthController {
       httpOnly: true,
       maxAge: +process.env.COOKIE_MAX_AGE_IN_ACCESS,
       sameSite: true,
-      secure: true,
+      secure: false,
     });
 
     return res.sendStatus(HttpStatus.OK);

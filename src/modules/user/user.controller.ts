@@ -100,14 +100,14 @@ export class UserController {
       httpOnly: true,
       maxAge: +process.env.COOKIE_MAX_AGE_IN_ACCESS,
       sameSite: true,
-      secure: true,
+      secure: false,
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       maxAge: +process.env.COOKIE_MAX_AGE_IN_REFRESH,
       sameSite: true,
-      secure: true,
+      secure: false,
     });
 
     return res.sendStatus(HttpStatus.OK);
