@@ -62,6 +62,17 @@ export class UserService {
 
     if (
       user?.userName === currentUser.userName &&
+      user?.uuid === currentUser.uuid
+    ) {
+      throw new BadRequestException(
+        `The user with username ${userName} is the current user`,
+      );
+    }
+
+    if (
+      userName !== undefined &&
+      user !== null &&
+      user?.userName !== currentUser.userName &&
       user?.uuid !== currentUser.uuid
     ) {
       throw new BadRequestException(
@@ -110,6 +121,14 @@ export class UserService {
       }
 
       throw new InternalServerErrorException('Failed to update user');
+    }
+  }
+
+  async getCurrentUser(uuid: string): Promise<UserEntity> {
+    try {
+      return await this.findByUuid(uuid);
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to get current user');
     }
   }
 

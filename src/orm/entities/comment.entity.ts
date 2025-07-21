@@ -67,10 +67,16 @@ export class CommentEntity {
   @ApiProperty({
     type: () => UserEntity,
     description: 'User who created the comment',
+    nullable: true,
   })
-  @ManyToOne(() => UserEntity, (user) => user.comments)
+  @ManyToOne(() => UserEntity, (user) => user.comments, {
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'user_uuid' })
   user: UserEntity;
+
+  @Column({ name: 'user_uuid', nullable: true })
+  user_uuid: string;
 
   @ApiProperty({
     type: () => FileEntity,

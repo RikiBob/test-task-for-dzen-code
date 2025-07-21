@@ -12,8 +12,8 @@ import { promises as fs } from 'fs';
 import { CommentEntity } from '../../orm/entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { SortCommentsDto } from './dto/sort-comments.dto';
-import { WSGateway } from '../../ws/ws.gateway';
 import { UserEntity } from '../../orm/entities/user.entity';
+import { WSGateway } from '../../ws/ws.gateway';
 
 export type PaginatedResult<T> = {
   data: T[];
@@ -76,14 +76,14 @@ export class CommentService {
     type sortKey = 'userName' | 'email' | 'createdAt';
 
     const sortFieldMap: Record<sortKey, string> = {
-      userName: 'user_name',
-      email: 'email',
-      createdAt: 'created_at',
+      userName: 'u.user_name',
+      email: 'u.email',
+      createdAt: 'c.created_at',
     };
 
     try {
       const { sortBy, sortOrder, page } = data;
-      const validSortField = sortFieldMap[sortBy] || 'created_at';
+      const validSortField = sortFieldMap[sortBy] || 'c.created_at';
       const validSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
       const pageNumber = page || 1;
       const take = 25;
@@ -182,7 +182,7 @@ export class CommentService {
 
       await this.commentRepository.save(comment);
 
-      this.webSocketGateway.emitEventToClients(`comments`, comment);
+      this.webSocketGateway.emitEventToClients('comments:update', comment);
 
       return comment;
     } catch (error) {

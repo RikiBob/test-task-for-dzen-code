@@ -37,7 +37,6 @@ export class CommentTextValidationPipe
       const tagName = tagNameMatch ? tagNameMatch[1].toLowerCase() : '';
 
       if (!allowedTags.has(tagName)) {
-        console.log('в allowedTags');
         throw new BadRequestException(`Disallowed tag <${tagName}> found.`);
       }
 

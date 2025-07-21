@@ -36,6 +36,7 @@ import { JwtAuthGuard } from '../../guards/jwt.guard';
 import { AuthenticatedRequest } from '../../strategies/jwt.strategy';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from '../../orm/entities/user.entity';
+import { MultipartValidationPipe } from '../../pipes/parse-form-data.pipe';
 
 @ApiTags('User')
 @Controller('user')
@@ -65,7 +66,7 @@ export class UserController {
     description: 'Failed to create user',
   })
   async createUser(
-    @Body() data: CreateUserDto,
+    @Body(new MultipartValidationPipe(CreateUserDto)) data: CreateUserDto,
     @UploadedFile() fileForm: Express.Multer.File,
     @Req() req: Request,
     @Res() res: Response,
@@ -99,15 +100,15 @@ export class UserController {
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       maxAge: +process.env.COOKIE_MAX_AGE_IN_ACCESS,
-      sameSite: true,
-      secure: false,
+      sameSite: 'none',
+      secure: true,
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       maxAge: +process.env.COOKIE_MAX_AGE_IN_REFRESH,
-      sameSite: true,
-      secure: false,
+      sameSite: 'none',
+      secure: true,
     });
 
     return res.sendStatus(HttpStatus.OK);
@@ -134,7 +135,7 @@ export class UserController {
     description: 'Failed to update user',
   })
   async updateUser(
-    @Body() data: UpdateUserDto,
+    @Body(new MultipartValidationPipe(UpdateUserDto)) data: UpdateUserDto,
     @UploadedFile() fileForm: Express.Multer.File,
     @Res() res: Response,
     @Req() req: AuthenticatedRequest,
@@ -162,6 +163,23 @@ export class UserController {
     }
 
     return res.sendStatus(HttpStatus.OK);
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Returns user data',
+    type: UserEntity,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to get current user',
+  })
+  async getUser(@Req() req: AuthenticatedRequest): Promise<UserEntity> {
+    return await this.userService.getCurrentUser(req.user.uuid);
   }
 
   @Get(':uuid')

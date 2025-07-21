@@ -11,12 +11,12 @@ import {
 import { Request, Response } from 'express';
 import {
   ApiBearerAuth,
-  ApiBody, ApiConsumes,
+  ApiBody,
   ApiCookieAuth,
   ApiOperation,
   ApiResponse,
-  ApiTags
-} from "@nestjs/swagger";
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -59,15 +59,15 @@ export class AuthController {
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       maxAge: +process.env.COOKIE_MAX_AGE_IN_ACCESS,
-      sameSite: true,
-      secure: false,
+      sameSite: 'none',
+      secure: true,
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       maxAge: +process.env.COOKIE_MAX_AGE_IN_REFRESH,
-      sameSite: true,
-      secure: false,
+      sameSite: 'none',
+      secure: true,
     });
 
     return res.sendStatus(HttpStatus.OK);
@@ -104,8 +104,8 @@ export class AuthController {
     res.cookie('accessToken', newTokens.accessToken, {
       httpOnly: true,
       maxAge: +process.env.COOKIE_MAX_AGE_IN_ACCESS,
-      sameSite: true,
-      secure: false,
+      sameSite: 'none',
+      secure: true,
     });
 
     return res.sendStatus(HttpStatus.OK);

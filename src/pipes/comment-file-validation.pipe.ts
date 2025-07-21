@@ -14,59 +14,26 @@ export class CommentFileValidationPipe
     file: Express.Multer.File,
     metadata: ArgumentMetadata,
   ): Promise<Express.Multer.File> {
-    if (metadata.type === 'custom') {
+    if (metadata.type === 'custom' && file) {
       await this.validateFile(file);
     }
-
     return file;
   }
 
   private async validateFile(file: Express.Multer.File): Promise<void> {
-    if (file) {
-      this.validateFileFormat(file);
-      this.validateTextFileSize(file);
-      await this.validateImageResolution(file);
-    }
-  }
+    this.validateFileFormat(file);
+    this.validateTextFileSize(file);
 
-  private async validateImageResolution(
-    file: Express.Multer.File,
-  ): Promise<void> {
     if (file.mimetype !== 'text/plain') {
-      const { width, height } = await sharp(file.buffer).metadata();
-
-      const targetWidth = 320;
-      const targetHeight = 240;
-
-      if (width !== targetWidth || height !== targetHeight) {
-        file.buffer = await this.resizeImage(
-          file.buffer,
-          targetWidth,
-          targetHeight,
-        );
-      }
+      await this.validateAndResizeImage(file);
     }
-  }
-
-  private async resizeImage(
-    fileBuffer: Buffer,
-    targetWidth: number,
-    targetHeight: number,
-  ): Promise<Buffer> {
-    return await sharp(fileBuffer)
-      .resize({
-        width: targetWidth,
-        height: targetHeight,
-        fit: 'fill',
-      })
-      .toBuffer();
   }
 
   private validateFileFormat(file: Express.Multer.File): void {
     const allowedFormats = [
       'image/jpeg',
-      'image/gif',
       'image/png',
+      'image/gif',
       'text/plain',
     ];
 
@@ -79,7 +46,52 @@ export class CommentFileValidationPipe
     const maxSize = 100 * 1024;
 
     if (file.mimetype === 'text/plain' && file.size > maxSize) {
-      throw new BadRequestException('Text file size exceeds the limit.');
+      throw new BadRequestException(
+        'Text file size exceeds the limit of 100 KB.',
+      );
     }
+  }
+
+  private async validateAndResizeImage(
+    file: Express.Multer.File,
+  ): Promise<void> {
+    const metadata = await sharp(file.buffer).metadata();
+
+    const targetWidth = 320;
+    const targetHeight = 240;
+
+    if (metadata.width !== targetWidth || metadata.height !== targetHeight) {
+      file.buffer = await this.resizeImage(
+        file.buffer,
+        targetWidth,
+        targetHeight,
+        file.mimetype,
+      );
+      file.size = file.buffer.length;
+    }
+  }
+
+  private async resizeImage(
+    fileBuffer: Buffer,
+    targetWidth: number,
+    targetHeight: number,
+    mimetype: string,
+  ): Promise<Buffer> {
+    const image = sharp(fileBuffer).resize({
+      width: targetWidth,
+      height: targetHeight,
+      fit: 'cover',
+      position: 'centre',
+    });
+
+    if (mimetype === 'image/jpeg') {
+      return await image.jpeg({ quality: 85 }).toBuffer();
+    } else if (mimetype === 'image/png') {
+      return await image.png({ compressionLevel: 9 }).toBuffer();
+    } else if (mimetype === 'image/gif') {
+      return await image.toBuffer();
+    }
+
+    return fileBuffer;
   }
 }

@@ -1,12 +1,5 @@
-import {
-  Controller,
-  Get,
-  HttpStatus,
-  Query,
-  Res,
-  Session,
-} from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, HttpStatus, Query, Res, Req } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CaptchaService } from './captcha.service';
@@ -30,16 +23,17 @@ export class CaptchaController {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     description: 'Filed to get captcha file.',
   })
-  async getCaptcha(
-    @Res() res: Response,
-    @Session() session: Record<string, string>,
-  ): Promise<void> {
-    const { image, text } = this.captchaService.generateCaptcha();
+  async getCaptcha(@Res() res: Response): Promise<void> {
+    const { image, token } = this.captchaService.generateCaptcha();
 
-    session.captchaText = text;
+    res.cookie('captcha_token', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: +process.env.COOKIE_MAX_AGE_IN_CAPTCHA,
+    });
 
-    res.set({ 'Content-Type': 'image/png' });
-
+    res.setHeader('Content-Type', 'image/png');
     res.send(image);
   }
 
@@ -47,7 +41,7 @@ export class CaptchaController {
   @ApiOperation({
     summary: 'Validate captcha',
     description:
-      'Validates the entered captcha value against the stored session value.',
+      'Validates the entered captcha value against the jwt token value.',
   })
   @ApiQuery({
     name: 'enteredValue',
@@ -61,23 +55,29 @@ export class CaptchaController {
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Captcha is not valid or not found in session.',
+    description: 'Captcha is not valid or not found token.',
   })
   validateCaptcha(
     @Query('enteredValue') enteredValue: string,
     @Res() res: Response,
-    @Session() session: Record<string, string>,
+    @Req() req: Request,
   ): Response {
-    const captchaText = session.captchaText;
+    const token = req.cookies?.['captcha_token'];
 
-    if (!captchaText) {
-      return res.status(400).json({ message: 'Captcha text not found.' });
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Captcha token missing',
+      });
     }
 
-    const isValid = this.captchaService.isCaptchaValid(
-      enteredValue,
-      captchaText,
-    );
+    const isValid = this.captchaService.validateCaptcha(token, enteredValue);
+
+    res.clearCookie('captcha_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    });
 
     if (isValid) {
       return res.status(200).json({ message: 'Captcha is valid.' });

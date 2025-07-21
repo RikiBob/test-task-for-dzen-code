@@ -1,5 +1,4 @@
 import * as cookieParser from 'cookie-parser';
-import * as session from 'express-session';
 import * as basicAuth from 'express-basic-auth';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
@@ -19,14 +18,6 @@ async function bootstrap() {
   });
 
   app.use(cookieParser());
-
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET_KEY,
-      resave: false,
-      saveUninitialized: true,
-    }),
-  );
 
   app.useGlobalPipes(
     new ValidationPipe({
